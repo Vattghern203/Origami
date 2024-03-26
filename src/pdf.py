@@ -33,34 +33,49 @@ class ResizePDF:
         self.__input_path = input_path
         self.__input_filename = os.path.basename(input_path)
         self.__output_path = f'{output_path}/{self.__input_filename}'
+
         self.__desired_format = desired_format or 'A4'
+        self.__desired_doc_type = 'pdf'
+
         self.__formats = {
             "A4": (210, 297)
         }
 
+    
+    def is_pdf(self) -> bool:
+
+        return self.__input_filename.split('.')[-1].lower() == self.__desired_doc_type
+
     def resize_pdf_to_a4(self):
-        try:
-            with open(self.__input_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                writer = PyPDF2.PdfWriter()
 
-                for page_number in range(len(reader.pages)):
+        if self.is_pdf():
 
-                    page = reader.pages[page_number]
-                    page.mediabox.lower_left = (0, 0)
-                    page.mediabox.upper_right = (595, 842)  # A4 size: 210 x 297 mm
+            try:
+                with open(self.__input_path, 'rb') as file:
+                    reader = PyPDF2.PdfReader(file)
+                    writer = PyPDF2.PdfWriter()
 
-                    writer.add_page(page)
+                    for page_number in range(len(reader.pages)):
 
-                with open(self.__output_path, 'wb') as output_file:
-                    writer.write(output_file)
+                        page = reader.pages[page_number]
+                        page.mediabox.lower_left = (0, 0)
+                        page.mediabox.upper_right = (595, 842)  # A4 size: 210 x 297 mm
 
-                print(f'{self.__input_filename} has been resized with success!')
+                        writer.add_page(page)
 
-        except Exception as error:
+                    with open(self.__output_path, 'wb') as output_file:
+                        writer.write(output_file)
 
-            print('An error occurred: ', error)
+                    print(f'The PDF file ({self.__input_filename}) has been resized with success!')
+
+            except Exception as error:
+
+                print('An error occurred: ', error)
+
+        else:
+
+            print(f'The file ({self.__input_filename}) is not a PDF or is not supported.')
 
 resizer = ResizePDF(
-    'essay.pdf', 'converted', 'A4'
+    'to_convert/essay.pdf', 'converted', 'A4'
 ).resize_pdf_to_a4()
