@@ -42,13 +42,38 @@ class ResizePDF:
         }
 
     
-    def is_pdf(self) -> bool:
+    def is_pdf(self, file: str) -> bool:
 
-        return self.__input_filename.split('.')[-1].lower() == self.__desired_doc_type
+        filename = file or self.__input_filename
 
-    def resize_pdf_to_a4(self):
+        return filename.split('.')[-1].lower() == self.__desired_doc_type
+    
 
-        if self.is_pdf():
+    def retrieve_pdfs_per_folder(self) -> list:
+
+        document_list = os.listdir(self.__input_path)
+
+        pdf_list = []
+
+        for doc in document_list:
+
+            if self.is_pdf(doc): pdf_list.append(doc)
+
+        print(pdf_list)
+
+        return pdf_list
+    
+
+    def resize_pdf_per_folder(self) -> None:
+
+        for pdf in self.retrieve_pdfs_per_folder():
+
+            self.resize_pdf_to_a4(pdf)
+
+
+    def resize_pdf_to_a4(self) -> None:
+
+        if self.is_pdf(self.__input_filename):
 
             try:
                 with open(self.__input_path, 'rb') as file:
@@ -77,5 +102,7 @@ class ResizePDF:
             print(f'The file ({self.__input_filename}) is not a PDF or is not supported.')
 
 resizer = ResizePDF(
-    'to_convert/essay.pdf', 'converted', 'A4'
-).resize_pdf_to_a4()
+    'to_convert/hash.pdf', 'converted', 'A4'
+)
+
+resizer.resize_pdf_to_a4()
