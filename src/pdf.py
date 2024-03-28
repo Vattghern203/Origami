@@ -43,6 +43,14 @@ class ResizePDF:
 
     
     def is_pdf(self, file: str) -> bool:
+        """Check if a file is a PDF.
+
+        Args:
+            file (str): The name of the file.
+
+        Returns:
+            bool: True if the file is a PDF, False otherwise.
+        """
 
         filename = file or self.__input_filename
 
@@ -50,6 +58,11 @@ class ResizePDF:
     
 
     def retrieve_pdfs_per_folder(self) -> list:
+        """Retrieve a list of PDF files in the input folder.
+
+        Returns:
+            list: List of PDF file paths.
+        """
 
         document_list = os.listdir(self.__input_path)
 
@@ -57,52 +70,103 @@ class ResizePDF:
 
         for doc in document_list:
 
-            if self.is_pdf(doc): pdf_list.append(doc)
+            if self.is_pdf(doc): 
+                
+                pdf_list.append(doc)
 
         print(pdf_list)
 
         return pdf_list
-    
-
-    def resize_pdf_per_folder(self) -> None:
-
-        for pdf in self.retrieve_pdfs_per_folder():
-
-            self.resize_pdf_to_a4(pdf)
 
 
-    def resize_pdf_to_a4(self) -> None:
+    def  __handle_resize(self, pdf_file_path: str):
+        """Resize a PDF file to the desired format.
+
+        Args:
+            pdf_file_path (str): The path to the PDF file.
+        """
+
+        try:
+
+            with open(pdf_file_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                writer = PyPDF2.PdfWriter()
+
+                for page_number in range(len(reader.pages)):
+
+                    page = reader.pages[page_number]
+                    page.mediabox.lower_left = (0, 0)
+                    page.mediabox.upper_right = (595, 842)  # A4 size: 210 x 297 mm
+
+                    writer.add_page(page)
+
+                with open(self.__output_path, 'wb') as output_file:
+                    writer.write(output_file)
+
+                print(f'The PDF file ({self.__input_filename}) has been resized with success!')
+
+        except Exception as error:
+
+            print('An error occurred: ', error)
+
+    def resize_pipeline(self, pdf_list: list) -> None:
+        """Resize multiple PDF files in a batch.
+
+        Args:
+            pdf_list (list): List of PDF file paths.
+        """
+
+        for doc in pdf_list:
+
+            self.__handle_resize(f'{self.__input_path}{doc}')
+       
+
+    def resize_a_single_file(self) -> None:
+        """Resize a single PDF file.
+
+        If the input file is not a PDF or is not supported, print an error message.
+        """
 
         if self.is_pdf(self.__input_filename):
 
-            try:
-                with open(self.__input_path, 'rb') as file:
-                    reader = PyPDF2.PdfReader(file)
-                    writer = PyPDF2.PdfWriter()
-
-                    for page_number in range(len(reader.pages)):
-
-                        page = reader.pages[page_number]
-                        page.mediabox.lower_left = (0, 0)
-                        page.mediabox.upper_right = (595, 842)  # A4 size: 210 x 297 mm
-
-                        writer.add_page(page)
-
-                    with open(self.__output_path, 'wb') as output_file:
-                        writer.write(output_file)
-
-                    print(f'The PDF file ({self.__input_filename}) has been resized with success!')
-
-            except Exception as error:
-
-                print('An error occurred: ', error)
+            self.__handle_resize(self.__input_path)
 
         else:
 
             print(f'The file ({self.__input_filename}) is not a PDF or is not supported.')
 
+
+    def resize(self) -> None:
+        """Resize PDF files based on the input path.
+
+        If the input path is a file, resize the single file.
+        If the input path is a directory, resize all PDF files in the directory.
+        """
+    
+        if os.path.isfile(self.__input_path):
+
+            self.resize_a_single_file()  # Resize the single file
+
+        elif os.path.isdir(self.__input_path):
+
+            pdf_list = self.retrieve_pdfs_per_folder()  # Retrieve PDFs from the directory
+
+            if len(pdf_list) == 1:
+
+                self.resize_a_single_file(pdf_list[0])  # Resize the single PDF file
+            elif len(pdf_list) > 1:
+
+                self.resize_pipeline(pdf_list)  # Resize multiple PDF files
+            else:
+
+                print("No PDF files found in the directory.")
+        else:
+
+            print("Invalid input path.")
+
+
 resizer = ResizePDF(
-    'to_convert/hash.pdf', 'converted', 'A4'
+    'to_convert/', 'converted', 'A4'
 )
 
-resizer.resize_pdf_to_a4()
+resizer.resize()
