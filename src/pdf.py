@@ -1,5 +1,7 @@
-import PyPDF2
+import pypdf
 import os
+
+from pypdf.generic import Fit
 
 from progress.bar import Bar
 from typing import Literal
@@ -14,6 +16,7 @@ class ResizePDF:
         self.__output_path = f'{output_path}{self.__input_filename}'
         self.__desired_format = desired_format
         self.__desired_doc_type = 'pdf'
+        self.__fitter = Fit.fit()
 
         self.__MEASEURE_POINTS = 2.83464567
 
@@ -113,8 +116,8 @@ class ResizePDF:
 
             with open(pdf_file_path, 'rb') as file:
 
-                reader = PyPDF2.PdfReader(file)
-                writer = PyPDF2.PdfWriter()
+                reader = pypdf.PdfReader(file)
+                writer = pypdf.PdfWriter()
 
                 for page_number in range(len(reader.pages)):
 
