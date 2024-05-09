@@ -40,6 +40,8 @@ class ResizePDF:
 
         os.makedirs(output_path, exist_ok=True)
 
+        self.__report = []
+
     def is_pdf(self, file: str) -> bool:
         """Check if a file is a PDF.
 
@@ -141,7 +143,7 @@ class ResizePDF:
             scale_factor_y
         )
 
-        print(scale_factor)
+        #print(scale_factor)
 
         return scale_factor
 
@@ -163,8 +165,8 @@ class ResizePDF:
 
             with open(pdf_file_path, 'rb') as file:
 
-                reader = PyPDF2.PdfReader(file)
-                writer = PyPDF2.PdfWriter()
+                reader = pypdf.PdfReader(file)
+                writer = pypdf.PdfWriter()
 
                 for page_number in range(len(reader.pages)):
 
@@ -175,8 +177,7 @@ class ResizePDF:
 
                     original_dimension = (original_width, original_height)
 
-                    print('Original dimensions',
-                          original_width, original_height)
+                    #print('Original dimensions', original_width, original_height)
 
                     # page.cropbox.scale(5, 5)
 
