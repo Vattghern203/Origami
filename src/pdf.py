@@ -1,19 +1,31 @@
-import PyPDF2
 import os
+import PyPDF2
+import time
 
 from progress.bar import Bar
-from typing import Literal
+from typing import Literal, List
 from utils.bcolors import bcolors
+
+
+class RetrievedFilesType:
+
+    def __init__(self, name: str, path: os.path, created_at: str, last_modified_at: str):
+
+        self.name = name
+        self.path = path
+        self.created_at = created_at,
+        self.last_modified_at = last_modified_at
 
 class ResizePDF:
 
-    def __init__(self, input_path: str, output_path: str, desired_format: Literal["A2","A3", "A4", "A5", "L13"]) -> None:
+    def __init__(self, input_path: str, output_path: str, desired_format: Literal["A2","A3", "A4", "A5", "L13"], order_by: Literal["creation_date", "last_modification_date", "name"]="name") -> None:
 
         self.__input_path = input_path
         self.__input_filename = os.path.basename(input_path)
         self.__output_path = f'{output_path}{self.__input_filename}'
         self.__desired_format = desired_format
         self.__desired_doc_type = 'pdf'
+        self.__order_by = order_by
 
         self.__MEASEURE_POINTS = 2.83464567
 
@@ -42,7 +54,7 @@ class ResizePDF:
 
         return filename.split('.')[-1].lower() == self.__desired_doc_type
 
-    def retrieve_pdfs_per_folder(self) -> list:
+    def retrieve_pdfs_per_folder(self) -> List[RetrievedFilesType]:
         """Retrieve a list of PDF files in the input folder.
 
         Returns:
@@ -57,19 +69,57 @@ class ResizePDF:
 
             if self.is_pdf(doc):
 
+                created_at, last_modified_at = self.get_last_modified_date(f'{self.__output_path}{doc}')
+
                 pdf_list.append(
                     {
                         "name": doc,
-                        "path": f'{self.__output_path}{doc}'
+                        "path": f'{self.__output_path}{doc}',
+                        "created_at": created_at,
+                        "last_modified_at": last_modified_at
                     }
                 )
 
-        print(f'{bcolors.OKCYAN}{pdf_list}')
+        ordenated_pdf_list = self.ordenate_files(pdf_list)
 
-        return pdf_list
+        self.print_documents(ordenated_pdf_list)
 
+        #print(pdf_list)
+
+        return ordenated_pdf_list
+    
     # def __handle_scale_factor(self, width: float, height: float):
 
+    def ordenate_files(self, pdf_list: List[RetrievedFilesType]) -> List[RetrievedFilesType]:
+        if self.__order_by == "name":
+            return sorted(pdf_list, key=lambda x: x["name"])
+        elif self.__order_by == "creation_date":
+            return sorted(pdf_list, key=lambda x: x["created_at"])
+        elif self.__order_by == "last_modification_date":
+            return sorted(pdf_list, key=lambda x: x["last_modified_at"])
+        else:
+            return pdf_list
+        
+
+    def print_documents(self, pdf_list: List[RetrievedFilesType]) -> None:
+        print("List of Retrieved PDF Documents:")
+        print("{:<30} {:<50} {:<20} {:<20}".format("Name", "Path", "Created At", "Last Modified At"))
+        print("-" * 120)
+        for doc in pdf_list:
+            print("{:<30} {:<50} {:<20} {:<20}".format(doc["name"], doc["path"], doc["created_at"], doc["last_modified_at"]))
+
+
+
+    def get_last_modified_date(self, path: os.path) -> object:
+
+        creation_time = os.path.getctime(path)
+        lastmodified_time = os.path.getmtime(path)
+
+        creation_time = time.ctime(creation_time)
+        lastmodified_time = time.ctime(lastmodified_time)
+
+        return  creation_time, lastmodified_time
+            
     def mm_to_point_transformation(self) -> tuple[float, float]:
 
         final_width = round(
@@ -219,9 +269,18 @@ class ResizePDF:
             print(f"{bcolors.WARNING}Invalid input path.")
 
 
-resizer = ResizePDF(
-    'D:/Biblioteca/Documentos/Códigos/_intern_projects/paper-converter/to_convert/', 'D:/Biblioteca/Documentos/Códigos/_intern_projects/paper-converter/converted/',
-    'A4'
-)
+""" resizer = ResizePDF(
+    'J:/arquivos_digitalizados/engenharia_agronomica/em_andamento/Engenharia_agronomica_2014(2)/',
+    'J:/arquivos_digitalizados/engenharia_agronomica/finalizados/Engenharia_agronomica_2014(2)/',
+    "A4"
+) """
 
-resizer.resize()
+
+resizer = ResizePDF(
+    'J:/arquivos_digitalizados/engenharia_agronomica/em_andamento/Engenharia_agronomica_2016(2)/',
+    'J:/arquivos_digitalizados/engenharia_agronomica/finalizados/Engenharia_agronomica_2016(2)/',
+    "A4"
+)
+#resizer.resize()
+
+resizer.retrieve_pdfs_per_folder()
